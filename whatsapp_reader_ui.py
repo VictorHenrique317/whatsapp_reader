@@ -48,8 +48,9 @@ def init_menu():
 
         for user in temporal_data.keys():
             user_data = temporal_data[user]
-            x_values = [months[month_number] for month_number in list(user_data.keys())]
+            x_values = [months[str(int(month_number))] for month_number in list(user_data.keys())]
             y_values = list(user_data.values())
+            print(user, x_values,y_values)
 
             rand = random.randint(0, len(colors) - 1) if len(temporal_data.keys()) <= len(colors) else -1
             color = colors[rand]
@@ -149,15 +150,52 @@ def init_menu():
     tkinter.Button(button_frame, text="Exibir as palavras mais faladas", command=most_said_info,
                    width=40, height=3).grid(row=4, pady=10)
 
-    tkinter.Button(main_window, text="Selecionar arquivo", command=read).grid(row=2, column=1)
+    tkinter.Button(main_window, text="Selecionar arquivo", command=select_language).grid(row=2, column=1)
 
     # ============================== Buttons =======================================#
 
 
-def read():
-    result = reader.read()
-    if result:
+def select_language():
+    # result = reader.read()
+    global lang_window
+    lang_window = tkinter.Toplevel(main_window)
+    lang_window.geometry("410x300")
+    lang_window.rowconfigure(0, weight=10)
+    lang_window.rowconfigure(1, weight=1)
+    lang_window.rowconfigure(2, weight=1)
+
+    lang_window.columnconfigure(0, weight=10000)
+    lang_window.columnconfigure(1, weight=0)
+    lang_window.columnconfigure(2, weight=10000)
+
+    tkinter.Label(main_window).grid(row=0)
+    tkinter.Label(main_window).grid(row=2)
+
+    label = tkinter.Label(lang_window, text="Selecione a linguagem do seu Whatsapp:", font="TimesNewRoman 15")
+    label.grid(row=0)
+    en_button = tkinter.Button(lang_window, text="Inglês", width=10, height=2, font="TimesNewRoman 15",
+                               command=set_english)
+    pt_button = tkinter.Button(lang_window, text="Português", width=10, height=2, font="TimesNewRoman 15",
+                               command=set_portuguese)
+    en_button.grid(row=1)
+    pt_button.grid(row=2)
+    print("reading")
+    # if result:
+    #     init_menu()
+
+
+def set_english():
+    global lang_window
+    if reader.set_english():
         init_menu()
+    lang_window.destroy()
+
+
+def set_portuguese():
+    # global lang_window
+    if reader.set_portuguse():
+        init_menu()
+    lang_window.destroy()
 
 
 reader = WhatsappReader()
@@ -174,6 +212,8 @@ months = {"1": "Jan",
           "11": "Nov",
           "12": "Dez"}
 
+
+lang_window = None
 main_window = tkinter.Tk()
 main_window.geometry("800x600")
 main_window.rowconfigure(0, weight=1000)
@@ -187,7 +227,10 @@ main_window.columnconfigure(2, weight=10000)
 tkinter.Label(main_window).grid(row=0)
 tkinter.Label(main_window).grid(row=2)
 button = tkinter.Button(main_window, text="Escolher arquivo de texto", width=40, height=5, font="TimesNewRoman 15",
-                        command=read)
+                        command=select_language)
+
+# pt_button = tkinter.Button(main_window, text="Português", width=40, height=5, font="TimesNewRoman 15",
+#                            command=portuguese)
 button.grid(row=1, column=1)
 tkinter.Label(main_window).grid(column=0, row=0, rowspan=3)
 tkinter.Label(main_window).grid(column=2, row=0, rowspan=3)

@@ -6,15 +6,16 @@ from tkinter.filedialog import askopenfilename
 class WhatsappReader:
     def __init__(self):
         self._file_path = None
-        self._name_exp = r"\d+?/\d+?/\d+, \d+?:\d+? .+? - (.+?): (.+)"
+        self._name_exp = None
         self._date_exp = r"(\d+)/(\d+)/(\d+)"
+        self._lang = None
 
         self._names = set()
 
-    def read(self):
+    def _read(self):
         self._names = set()
-
         try:
+            print("picking file")
             temp_path = self._pick_file()
             if temp_path == "":
                 return False
@@ -29,9 +30,13 @@ class WhatsappReader:
                     if results is not None and len(results) != 0:
                         self._names.add(results[0][0])
             self._names = tuple(self._names)
-            return True
+            if len(self._names) == 0:  ## nothing found
+                return False
+            else:
+                return True
             # self._test()
         except FileNotFoundError:
+            print("file not found")
             return False
 
     @staticmethod
@@ -77,7 +82,7 @@ class WhatsappReader:
                 current_user = re.findall(self._name_exp, line)[0][0]
 
                 if current_user in average:  # could be any dict
-                    average[current_user] += len(msg) # for each of the users
+                    average[current_user] += len(msg)  # for each of the users
                     msg_count[current_user] += 1
         for key in average:
             average[key] = float(str(average[key] / msg_count[key])[:4])
@@ -101,9 +106,9 @@ class WhatsappReader:
                     continue
                 for word in re.findall(self._name_exp, line)[0][1].split(" "):
                     word = word.casefold().strip()
-                    if word == "omitted>":
+                    if word == "omitted>" or word == "oculto>":
                         continue
-                    word = "Imagem Enviada" if word == "<media" else word
+                    word = "Mídia" if word == "<media" or word == "mídia" or word == "<arquivo" else word
 
                     current_word_dict[word] = 0 if word not in current_word_dict else current_word_dict[word]
                     current_word_dict[word] += 1
@@ -157,9 +162,15 @@ class WhatsappReader:
                     # current_date: tuple = re.findall(self._date_exp, line)[0]
                     results = re.findall(self._date_exp, line)[0]
                     if not per_month:
-                        current_date = "{}/{}/{}".format(results[1], results[0], results[2])
+                        if self._lang == "en":
+                            current_date = "{}/{}/{}".format(results[1], results[0], results[2])
+                        elif self._lang == "pt":
+                            current_date = "{}/{}/{}".format(results[0], results[1], results[2])
                     else:
-                        current_date = str(results[0])
+                        if self._lang == "en":
+                            current_date = str(results[0])
+                        elif self._lang == "pt":
+                            current_date = str(results[1])
                     # print(re.findall(self._date_exp, line))
                     if current_date not in users_data[current_user]:
                         users_data[current_user][current_date] = 0
@@ -168,3 +179,16 @@ class WhatsappReader:
 
     def get_users(self):
         return self._names
+
+    def set_english(self):
+        self._lang = "en"
+        self._name_exp = r"\d+?/\d+?/\d+, \d+?:\d+? .+? - (.+?): (.+)"
+        result = self._read()
+        return result
+
+    # def set_portuguese(self):
+    def set_portuguse(self):
+        self._lang = "pt"
+        self._name_exp = r"\d+?/\d+?/\d+? \d+?:\d+? - (.+?): (.+)"
+        result = self._read()
+        return result
